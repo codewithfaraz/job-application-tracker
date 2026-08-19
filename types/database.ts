@@ -693,7 +693,7 @@ export type Database = {
     Functions: {
       begin_ai_run: {
         Args: {
-          p_application_id: string
+          p_application_id: string | null
           p_input_hash: string
           p_model: string
           p_operation: Database["public"]["Enums"]["ai_operation"]
@@ -732,10 +732,10 @@ export type Database = {
       complete_ai_run: {
         Args: {
           p_ai_run_id: string
-          p_error_message?: string
-          p_input_tokens?: number
-          p_output_tokens?: number
-          p_result?: Json
+          p_error_message?: string | null
+          p_input_tokens?: number | null
+          p_output_tokens?: number | null
+          p_result?: Json | null
           p_server_capability: string
           p_status: Database["public"]["Enums"]["ai_run_status"]
         }
@@ -765,7 +765,7 @@ export type Database = {
       }
       finalize_resume_upload: {
         Args: {
-          p_extracted_text?: string
+          p_extracted_text?: string | null
           p_file_hash: string
           p_file_size_bytes: number
           p_mime_type: string
@@ -806,10 +806,10 @@ export type Database = {
       }
       restore_resume_metadata_after_failed_delete: {
         Args: {
-          p_archived_at: string
+          p_archived_at: string | null
           p_created_at: string
-          p_extracted_text: string
-          p_file_hash: string
+          p_extracted_text: string | null
+          p_file_hash: string | null
           p_file_size_bytes: number
           p_mime_type: string
           p_name: string
@@ -842,8 +842,8 @@ export type Database = {
       transition_application_stage: {
         Args: {
           p_application_id: string
-          p_notes?: string
-          p_occurred_at?: string
+          p_notes?: string | null
+          p_occurred_at?: string | null
           p_to_stage_id: string
         }
         Returns: {
