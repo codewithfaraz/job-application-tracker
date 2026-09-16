@@ -2,7 +2,6 @@ import {
   ArrowRight,
   BriefcaseBusiness,
   CalendarClock,
-  CircleCheckBig,
   MessageSquareReply,
   Presentation,
 } from "lucide-react";
@@ -46,11 +45,10 @@ export default async function DashboardPage() {
           <h2 id="metrics-heading" className="font-display text-xl font-semibold text-evergreen-deep">Search at a glance</h2>
           <div className="flex gap-2"><Badge variant="outline">Active {overview.summary.activeApplications}</Badge><Badge variant="warning">No response {overview.summary.noResponse}</Badge></div>
         </div>
-        <div className="grid overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-2 sm:gap-px xl:grid-cols-4">
+        <div className="grid overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-3 sm:gap-px">
           <MetricCard label="Applications" value={overview.summary.applications} note="Ever reached Applied" icon={<BriefcaseBusiness />} />
           <MetricCard label="Responses" value={overview.summary.responses} note={rateNote(overview.conversions.applicationToResponse.rate)} icon={<MessageSquareReply />} />
           <MetricCard label="Interviews" value={overview.summary.interviews} note={rateNote(overview.conversions.applicationToInterview.rate)} icon={<Presentation />} />
-          <MetricCard label="Offers" value={overview.summary.offers} note={rateNote(overview.conversions.applicationToOffer.rate)} icon={<CircleCheckBig />} />
         </div>
       </section>
 
