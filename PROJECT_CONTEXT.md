@@ -155,6 +155,7 @@ actions/                      Server Actions ("use server") — ALL writes go th
   ai.ts                       Pasted-JD extraction, saved-JD extraction, resume comparison, interview prep
   settings.ts, auth.ts        Profile settings; sign in / sign up / sign out
 lib/
+  action-states.ts            useActionState types + initial values for Server Actions (must NOT live in "use server" files)
   supabase/                   Env config, server/browser clients, proxy session logic, auth helpers, safe redirects
   data/                       Server-only READ loaders used by pages (each calls requireVerifiedIdentity)
   analytics/                  Pure, unit-tested aggregation (aggregate.ts), Sankey builder (sankey.ts), types
@@ -194,7 +195,7 @@ Browser ──► proxy.ts ──► lib/supabase/proxy.ts   (getClaims, refresh
 - **Reads** live in `lib/data/*` (all `server-only`). **Writes** live in `actions/*` only.
 - **Defense in depth:** every query filters `.eq("user_id", userId)` **and** RLS enforces ownership. Never add a service-role or secret key.
 - **Business rules live in Postgres** (triggers and RPCs). TypeScript validation mirrors them to show friendly errors. When they disagree, the database wins.
-- **Action state shape:** `{ status, message?, fieldErrors? }`, consumed with `useActionState`; feedback is shown with `sonner` toasts.
+- **Action state shape:** `{ status, message?, fieldErrors? }`, consumed with `useActionState`; feedback is shown with `sonner` toasts. State types and initial values live in `lib/action-states.ts` (plus `lib/validation/application.ts` and `lib/ai/action-state.ts`), never in the action files themselves.
 - **Pure logic is separated and unit-tested:** `lib/analytics`, `lib/pipeline`, `lib/validation`, and `lib/ai/{schemas,prompts,cache-key,config-policy}`.
 - **Route protection:** the prefixes `/dashboard`, `/applications`, `/pipeline`, `/calendar`, `/analytics`, `/resumes`, `/settings` are protected in `lib/supabase/proxy.ts`. Signed-in users visiting `/login` or `/signup` are sent to `/dashboard`. Every redirect target passes through `sanitizeRedirectPath` (open-redirect safe).
 - Every `(dashboard)` route renders dynamically (`force-dynamic` layout) and has a `loading.tsx`; several also have `error.tsx`.
@@ -494,7 +495,7 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "set job_crm.demo_user_id = '<auth-us
 |---|---|
 | `npm run lint` | ✅ Clean |
 | `npm run typecheck` | ✅ Clean |
-| `npm run test` | ✅ 55/55 tests in 12 files. The PDF extraction test (`lib/resumes/extract-text.server.test.ts`) can exceed Vitest's 5-second default when the machine is busy — flaky under load, not broken. |
+| `npm run test` | ✅ 55/55 tests in 12 files at `85b4d2e`; 63/63 in 13 files after the Server Action export fix (adds `actions/server-action-exports.test.ts`). The PDF extraction test (`lib/resumes/extract-text.server.test.ts`) can exceed Vitest's 5-second default when the machine is busy — flaky under load, not broken. |
 | `npm run build` | ✅ Succeeds (Turbopack): `/` is static; the other 16 routes and the proxy are dynamic |
 | pgTAP (`npm run db:test`) | Not run (needs Docker) |
 
@@ -512,6 +513,7 @@ There are **no end-to-end browser tests** committed.
   - `954d677` made optional RPC arguments nullable in `types/database.ts` to fix build errors.
   - `85b4d2e` removed `headers` handling from the `setAll` cookie callback in `lib/supabase/proxy.ts` to fix sign-in.
   - Don't reintroduce either change without testing a production build and sign-in.
+  - Sep 2026: `actions/{pipeline,crm,companies,settings,resumes}.ts` exported `initial…State` objects, so every action in those files crashed at runtime ("A 'use server' file can only export async functions") — the case-file Move button, pipeline moves, contacts, interviews, notes, company edits, settings, and resume uploads. The states moved to `lib/action-states.ts`.
 
 ---
 
@@ -530,6 +532,7 @@ There are **no end-to-end browser tests** committed.
 
 ### Don't
 
+- **Don't export anything except async functions (and types) from a `"use server"` file.** Lint, typecheck, and build all pass, but Next.js throws at runtime the moment one of the file's actions is called, and the page shows its error boundary. Put shared action state in `lib/action-states.ts`; `actions/server-action-exports.test.ts` enforces this rule.
 - **Don't regenerate `types/database.ts` and commit it blindly.** Commit `954d677` hand-edited it to add `| null` to optional RPC arguments: `begin_ai_run.p_application_id`; `complete_ai_run` result, error, and token arguments; `finalize_resume_upload.p_extracted_text`; the nullable fields of `restore_resume_metadata_after_failed_delete`; and `transition_application_stage.p_notes` / `p_occurred_at`. `npm run db:types` reverts this and breaks the build.
 - Don't overwrite `raw_job_description`. AI results belong in `ai_summary`, `ai_extracted_data`, and `ai_runs`.
 - Don't change a used stage's `category` — the database forbids it and analytics depend on it.

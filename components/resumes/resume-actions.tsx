@@ -6,12 +6,12 @@ import { toast } from "sonner";
 import {
   archiveResumeAction,
   deleteResumeAction,
-  initialResumeActionState,
   restoreResumeAction,
 } from "@/actions/resumes";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { initialResumeActionState } from "@/lib/action-states";
 
 export function ResumeActions({
   resumeId,

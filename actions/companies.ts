@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import type { CompanyActionState } from "@/lib/action-states";
 import { requireVerifiedIdentity } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 
@@ -27,14 +28,6 @@ const companySchema = z.object({
   location: z.string().trim().max(240).transform((value) => value || null),
   notes: z.string().trim().max(10_000).transform((value) => value || null),
 });
-
-export type CompanyActionState = {
-  status: "idle" | "success" | "error";
-  message?: string;
-  fieldErrors?: Record<string, string[]>;
-};
-
-export const initialCompanyActionState: CompanyActionState = { status: "idle" };
 
 export async function updateCompanyAction(
   _previousState: CompanyActionState,

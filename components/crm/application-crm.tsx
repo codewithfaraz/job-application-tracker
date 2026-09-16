@@ -8,7 +8,6 @@ import {
   deleteApplicationEventAction,
   deleteApplicationNoteAction,
   deleteContactAction,
-  initialCrmActionState,
   saveApplicationEventAction,
   saveApplicationNoteAction,
   saveContactAction,
@@ -20,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
+import { initialCrmActionState } from "@/lib/action-states";
 import { eventTypes } from "@/lib/validation/crm";
 
 export type ApplicationCrmViewData = {

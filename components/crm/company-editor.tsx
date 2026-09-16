@@ -3,14 +3,12 @@
 import { Building2, ExternalLink } from "lucide-react";
 import { useActionState } from "react";
 
-import {
-  initialCompanyActionState,
-  updateCompanyAction,
-} from "@/actions/companies";
+import { updateCompanyAction } from "@/actions/companies";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { initialCompanyActionState } from "@/lib/action-states";
 
 export function CompanyEditor({
   applicationId,

@@ -5,6 +5,7 @@ import { createHash } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import type { ResumeActionState } from "@/lib/action-states";
 import {
   extractResumeText,
   isResumeTextExtractionError,
@@ -19,14 +20,6 @@ import {
   RESUME_BUCKET,
   resumeMetadataSchema,
 } from "@/lib/validation/resume";
-
-export type ResumeActionState = {
-  status: "idle" | "success" | "error";
-  message?: string;
-  fieldErrors?: Record<string, string[]>;
-};
-
-export const initialResumeActionState: ResumeActionState = { status: "idle" };
 
 const resumeIdSchema = z.string().uuid();
 

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import type { TransitionApplicationState } from "@/lib/action-states";
 import { requireVerifiedIdentity } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 
@@ -11,15 +12,6 @@ const transitionSchema = z.object({
   toStageId: z.string().uuid(),
   notes: z.string().trim().max(1_000).optional(),
 });
-
-export type TransitionApplicationState = {
-  status: "idle" | "success" | "error";
-  message?: string;
-};
-
-export const initialTransitionApplicationState: TransitionApplicationState = {
-  status: "idle",
-};
 
 export async function transitionApplicationStageAction(
   _previousState: TransitionApplicationState,

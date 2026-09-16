@@ -2,19 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 
+import type { SettingsActionState } from "@/lib/action-states";
 import { requireVerifiedIdentity } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 import { settingsSchema } from "@/lib/validation/settings";
-
-export type SettingsActionState = {
-  status: "idle" | "success" | "error";
-  message?: string;
-  fieldErrors?: Record<string, string[]>;
-};
-
-export const initialSettingsActionState: SettingsActionState = {
-  status: "idle",
-};
 
 export async function updateSettingsAction(
   _previousState: SettingsActionState,

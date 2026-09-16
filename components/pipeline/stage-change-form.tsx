@@ -3,11 +3,9 @@
 import { useActionState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 
-import {
-  initialTransitionApplicationState,
-  transitionApplicationStageAction,
-} from "@/actions/pipeline";
+import { transitionApplicationStageAction } from "@/actions/pipeline";
 import { Button } from "@/components/ui/button";
+import { initialTransitionApplicationState } from "@/lib/action-states";
 import type { PipelineStage } from "@/lib/pipeline/types";
 
 type StageChangeFormProps = {

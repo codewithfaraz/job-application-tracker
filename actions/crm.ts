@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import type { CrmActionState } from "@/lib/action-states";
 import { requireVerifiedIdentity } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -10,14 +11,6 @@ import {
   contactSchema,
   noteSchema,
 } from "@/lib/validation/crm";
-
-export type CrmActionState = {
-  status: "idle" | "success" | "error";
-  message?: string;
-  fieldErrors?: Record<string, string[]>;
-};
-
-export const initialCrmActionState: CrmActionState = { status: "idle" };
 
 function crmError(message: string): CrmActionState {
   return { status: "error", message };

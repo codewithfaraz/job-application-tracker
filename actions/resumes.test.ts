@@ -25,10 +25,8 @@ vi.mock("@/lib/resumes/extract-text.server", async (importOriginal) => {
   return { ...actual, extractResumeText: mocks.extractResumeText };
 });
 
-import {
-  finalizeResumeUploadAction,
-  initialResumeActionState,
-} from "./resumes";
+import { finalizeResumeUploadAction } from "./resumes";
+import { initialResumeActionState } from "@/lib/action-states";
 import { ResumeTextExtractionError } from "@/lib/resumes/extract-text.server";
 
 const USER_ID = "11111111-1111-4111-8111-111111111111";

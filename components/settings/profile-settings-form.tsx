@@ -3,13 +3,11 @@
 import { Save } from "lucide-react";
 import { useActionState } from "react";
 
-import {
-  initialSettingsActionState,
-  updateSettingsAction,
-} from "@/actions/settings";
+import { updateSettingsAction } from "@/actions/settings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { initialSettingsActionState } from "@/lib/action-states";
 
 const commonTimezones = [
   "UTC",
