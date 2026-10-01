@@ -158,7 +158,7 @@ lib/
   action-states.ts            useActionState types + initial values for Server Actions (must NOT live in "use server" files)
   supabase/                   Env config, server/browser clients, proxy session logic, auth helpers, safe redirects
   data/                       Server-only READ loaders used by pages (each calls requireVerifiedIdentity)
-  analytics/                  Pure, unit-tested aggregation (aggregate.ts), Sankey builder (sankey.ts), types
+  analytics/                  Pure, unit-tested aggregation (aggregate.ts), Sankey builder (sankey.ts), timezone date helpers (calendar.ts), types
   pipeline/                   Pure helpers: group applications by stage, merge the activity timeline
   validation/                 Zod schemas: application, crm, settings, auth, resume
   ai/                         Config/policy, provider, versioned prompts, output schemas, services, cache key
@@ -167,7 +167,7 @@ components/
   applications/               Form (create/edit), list, filters, case-file detail, record actions, copy button
   pipeline/                   Board, stage-change form
   crm/                        Contacts / interviews / notes panels, company editor
-  analytics/                  Recharts charts, conversion grid, effectiveness table, metric card
+  analytics/                  Recharts charts, conversion grid, effectiveness table, metric card, applied-today panel
   ai/                         AI workbench tabs and panels, result renderers, form JD analyzer, history
   resumes/  settings/  auth/  layout/ (app shell, nav, brand mark, route spine)  ui/ (primitives)
 types/database.ts             Supabase-generated DB types — HAND-PATCHED, see §13
@@ -210,7 +210,7 @@ Browser ──► proxy.ts ──► lib/supabase/proxy.ts   (getClaims, refresh
 | `/` | Public landing page | — | — |
 | `/login`, `/signup` | Email/password auth | `getVerifiedIdentity` | `actions/auth.ts` |
 | `/auth/callback`, `/auth/confirm` | Code-exchange and email-confirmation route handlers | — | — |
-| `/dashboard` | KPI cards (Applications, Responses, Interviews, each with a rate — the Offers card was deliberately removed from the dashboard; offers still appear on `/analytics` and in the data layer), Active and No-response badges, monthly applications chart, active pipeline counts, next 5 upcoming interviews, most-used source and channel | `getDashboardOverview` | — |
+| `/dashboard` | "Applied today" panel (count for the current day in the profile timezone; an open tab refreshes itself after local midnight), KPI cards (Applications, Responses, Interviews, each with a rate — the Offers card was deliberately removed from the dashboard; offers still appear on `/analytics` and in the data layer), Active and No-response badges, monthly applications chart, active pipeline counts, next 5 upcoming interviews, most-used source and channel | `getDashboardOverview` | — |
 | `/applications` | Search by company or role; filters for stage, source, channel, work mode, and active / archived / all; sort; pagination (25 per page) | `listApplications`, `getApplicationFormOptions` | — |
 | `/applications/new` | **Quick entry:** company, role, found via, applied through, Saved/Applied, date. **More details:** URL, location, work mode, employment type, seniority, salary, raw JD (with optional AI analyzer), notes, resume. Shows a duplicate warning with "Create anyway". | `getApplicationFormOptions` | `createApplicationAction`, `analyzePastedJobDescriptionAction` |
 | `/applications/[id]` | **Case file:** route spine (found → applied → current), original JD with copy button, notes, merged activity timeline, stage mover, details, AI workbench (3 tabs + saved history), contacts / interviews / timeline notes, company editor, archive / restore / delete | `getApplicationDetail`, `getApplicationAIHistory` | pipeline, crm, companies, ai, and applications actions |
@@ -405,6 +405,7 @@ See [§10](#10-ai-subsystem-optional).
 | **Response** | Ever reached a stage with category **screening, assessment, interview, offer, rejected, or closed**. An explicit rejection counts; ghosted, withdrawn, or accepted alone do **not**. |
 | **Interview** | Ever reached an **interview**-category stage. Screening and assessment do not count. |
 | **Offer / Accepted** | Ever reached an offer / accepted category stage. |
+| **Applied today** | Applications whose **first Applied event** falls on the current calendar day in the **profile timezone**. Ignores the `from`/`to` window and includes archived records. Resets at local midnight because it is derived from the clock, not stored; `components/analytics/day-change-refresh.tsx` refreshes an open dashboard tab once the local date changes. Backdated entries count on their applied date, not the day they were logged. |
 | **No response yet** | Not archived, current category is applied, never had a response, and the first Applied event is at least `no_response_days` old. |
 | **Active applications** | Not archived and the current stage is not terminal. |
 | **Conversions** | Application → response, → screening, → interview, → offer (denominator: cohort); interview → offer (denominator: interviewed); offer → accepted (denominator: offered). A rate is `null` when its denominator is 0. The UI always shows "n of d". |

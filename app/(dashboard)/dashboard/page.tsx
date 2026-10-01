@@ -8,6 +8,7 @@ import {
 import Link from "next/link";
 
 import { ApplicationsOverTimeChart } from "@/components/analytics/analytics-charts";
+import { AppliedTodayPanel } from "@/components/analytics/applied-today-panel";
 import { MetricCard } from "@/components/analytics/metric-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,8 @@ export default async function DashboardPage() {
         </div>
         <Button asChild size="lg"><Link href="/applications/new">Add application <span aria-hidden="true">+</span></Link></Button>
       </header>
+
+      <AppliedTodayPanel appliedToday={overview.appliedToday} timezone={overview.timezone} className="mt-7" />
 
       <section aria-labelledby="metrics-heading" className="mt-7">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">

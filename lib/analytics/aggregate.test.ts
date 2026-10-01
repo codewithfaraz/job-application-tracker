@@ -302,3 +302,60 @@ describe("aggregateAnalytics", () => {
     ]);
   });
 });
+
+describe("appliedToday", () => {
+  // 19:30 UTC on 1 Oct is 00:30 on 2 Oct in Asia/Karachi (UTC+5).
+  const now = "2026-10-01T19:30:00.000Z";
+  const applications = [
+    application("utc-midnight", "applied", "linkedin", "careers", "2026-10-01T00:00:00.000Z"),
+    application("moved-from-saved", "applied", "linkedin", "easy", "2026-10-01T19:10:00.000Z"),
+    {
+      ...application("archived", "applied", "referral", "easy", "2026-10-01T19:20:00.000Z"),
+      archivedAt: "2026-10-01T19:25:00.000Z",
+    },
+    application("saved-only", "saved", "linkedin", "careers", null),
+  ];
+  const events = [
+    event("u0", "utc-midnight", null, "applied", "2026-10-01T00:00:00.000Z"),
+    event("m0", "moved-from-saved", null, "saved", "2026-09-30T10:00:00.000Z"),
+    event("m1", "moved-from-saved", "saved", "applied", "2026-10-01T19:10:00.000Z"),
+    event("a0", "archived", null, "applied", "2026-10-01T19:20:00.000Z"),
+    event("s0", "saved-only", null, "saved", "2026-10-01T19:00:00.000Z"),
+  ];
+
+  it("counts first Applied events on today's date in the profile timezone", () => {
+    const karachi = aggregateAnalytics(
+      { ...dataset(applications, events), timezone: "Asia/Karachi" },
+      { now },
+    );
+    const utc = aggregateAnalytics(dataset(applications, events), { now });
+
+    expect(karachi.appliedToday).toEqual({ date: "2026-10-02", count: 2 });
+    expect(utc.appliedToday).toEqual({ date: "2026-10-01", count: 3 });
+  });
+
+  it("ignores analytics filters and counts only the first Applied event", () => {
+    const input = dataset(
+      [
+        ...applications,
+        application("reapplied", "applied", "linkedin", "careers", "2026-09-20T00:00:00.000Z"),
+      ],
+      [
+        ...events,
+        event("r0", "reapplied", null, "applied", "2026-09-20T00:00:00.000Z"),
+        event("r1", "reapplied", "applied", "screening", "2026-09-25T00:00:00.000Z"),
+        event("r2", "reapplied", "screening", "applied", "2026-10-01T09:00:00.000Z"),
+      ],
+    );
+
+    const overview = aggregateAnalytics(input, {
+      from: "2026-09-01",
+      to: "2026-09-30",
+      includeArchived: false,
+      now,
+    });
+
+    expect(overview.summary.applications).toBe(1);
+    expect(overview.appliedToday).toEqual({ date: "2026-10-01", count: 3 });
+  });
+});
