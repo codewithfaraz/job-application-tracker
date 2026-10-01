@@ -77,6 +77,7 @@ export default async function EditApplicationPage({ params }: EditApplicationPag
             salaryCurrency: application.salaryCurrency ?? "",
             salaryPeriod: application.salaryPeriod ?? "",
             appliedAt: application.appliedAt?.slice(0, 10) ?? "",
+            tag: application.tag ?? "",
             resumeId: application.submittedResumeId ?? "",
             rawJobDescription: application.rawJobDescription,
             notes: application.notes ?? "",

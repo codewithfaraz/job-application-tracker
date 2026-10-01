@@ -7,11 +7,13 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+import { ApplicationTagBadge } from "@/components/applications/application-tag-badge";
 import { RouteSpine } from "@/components/layout/route-spine";
 import { Badge, type badgeVariants } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/components/ui/cn";
 import { EmptyState } from "@/components/ui/empty-state";
+import type { ApplicationTag } from "@/lib/application-tags";
 import type { VariantProps } from "class-variance-authority";
 
 type ApplicationListItemView = {
@@ -22,6 +24,7 @@ type ApplicationListItemView = {
   workMode: string | null;
   employmentType: string | null;
   appliedAt: string | null;
+  tag: ApplicationTag | null;
   archivedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -99,6 +102,7 @@ function ApplicationRow({ application }: { application: ApplicationListItemView 
         <div className="flex flex-wrap items-center gap-2">
           <span className="font-mono text-[0.6rem] font-semibold tracking-[0.12em] text-muted-foreground">AP-{recordNumber}</span>
           <Badge variant={stageVariant}>{application.currentStage.name}</Badge>
+          {application.tag ? <ApplicationTagBadge tag={application.tag} /> : null}
           {application.archivedAt ? <Badge variant="neutral">Archived</Badge> : null}
         </div>
         <h2 className="mt-2 truncate font-display text-xl font-semibold text-evergreen-deep">

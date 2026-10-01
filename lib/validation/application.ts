@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { APPLICATION_TAGS } from "@/lib/application-tags";
+
 const MAX_JOB_DESCRIPTION_LENGTH = 250_000;
 const MAX_NOTES_LENGTH = 25_000;
 const MAX_SALARY = 1_000_000_000;
@@ -231,6 +233,7 @@ const applicationFieldsShape = {
     "Choose a valid salary period.",
   ),
   appliedAt: optionalAppliedAt,
+  tag: optionalEnum(APPLICATION_TAGS, "Choose a valid tag."),
   resumeId: optionalId("Choose a valid resume."),
   rawJobDescription: z
     .string()

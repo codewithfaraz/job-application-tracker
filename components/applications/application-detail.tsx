@@ -11,6 +11,7 @@ import {
   Paperclip,
   Route,
   Sparkles,
+  Tag,
   UserRound,
 } from "lucide-react";
 import Link from "next/link";
@@ -18,6 +19,7 @@ import type { ReactNode } from "react";
 
 import { ApplicationAIWorkbench } from "@/components/ai/application-ai-workbench";
 import { ApplicationRecordActions } from "@/components/applications/application-record-actions";
+import { ApplicationTagBadge } from "@/components/applications/application-tag-badge";
 import { CopyTextButton } from "@/components/applications/copy-text-button";
 import { ApplicationCrm } from "@/components/crm/application-crm";
 import { CompanyEditor } from "@/components/crm/company-editor";
@@ -34,6 +36,7 @@ import type {
 import type { StoredAIArtifact } from "@/lib/data/ai";
 import { getAIConfigurationStatus } from "@/lib/ai/config";
 import { jobExtractionSchema } from "@/lib/ai/schemas";
+import { APPLICATION_TAG_LABELS } from "@/lib/application-tags";
 import { buildApplicationTimeline } from "@/lib/pipeline/timeline";
 
 type ApplicationDetailProps = {
@@ -73,6 +76,7 @@ function ApplicationDetail({ application, options, aiHistory }: ApplicationDetai
                 <Badge variant={stageBadgeVariant(application.currentStage.category)}>
                   {application.currentStage.name}
                 </Badge>
+                {application.tag ? <ApplicationTagBadge tag={application.tag} /> : null}
                 {application.archivedAt ? <Badge variant="neutral">Archived</Badge> : null}
               </div>
               <h1 className="mt-4 font-display text-4xl font-semibold leading-[0.98] text-evergreen-deep sm:text-5xl">
@@ -241,6 +245,7 @@ function ApplicationDetail({ application, options, aiHistory }: ApplicationDetai
             </CardHeader>
             <CardContent>
               <dl className="divide-y divide-border">
+                <MetadataItem icon={<Tag />} label="Tag" value={application.tag ? APPLICATION_TAG_LABELS[application.tag] : "None"} />
                 <MetadataItem icon={<CalendarDays />} label="Applied" value={application.appliedAt ? formatDate(application.appliedAt) : "Not applied"} />
                 <MetadataItem icon={<MapPin />} label="Location" value={application.location ?? application.company.location ?? "Not specified"} />
                 <MetadataItem icon={<Laptop />} label="Work mode" value={humanize(application.workMode)} />

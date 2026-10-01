@@ -344,6 +344,7 @@ export type Database = {
           salary_period: Database["public"]["Enums"]["salary_period"] | null
           seniority: string | null
           submitted_resume_id: string | null
+          tag: Database["public"]["Enums"]["application_tag"] | null
           updated_at: string
           user_id: string
           work_mode: Database["public"]["Enums"]["work_mode"] | null
@@ -373,6 +374,7 @@ export type Database = {
           salary_period?: Database["public"]["Enums"]["salary_period"] | null
           seniority?: string | null
           submitted_resume_id?: string | null
+          tag?: Database["public"]["Enums"]["application_tag"] | null
           updated_at?: string
           user_id?: string
           work_mode?: Database["public"]["Enums"]["work_mode"] | null
@@ -402,6 +404,7 @@ export type Database = {
           salary_period?: Database["public"]["Enums"]["salary_period"] | null
           seniority?: string | null
           submitted_resume_id?: string | null
+          tag?: Database["public"]["Enums"]["application_tag"] | null
           updated_at?: string
           user_id?: string
           work_mode?: Database["public"]["Enums"]["work_mode"] | null
@@ -869,6 +872,7 @@ export type Database = {
           salary_period: Database["public"]["Enums"]["salary_period"] | null
           seniority: string | null
           submitted_resume_id: string | null
+          tag: Database["public"]["Enums"]["application_tag"] | null
           updated_at: string
           user_id: string
           work_mode: Database["public"]["Enums"]["work_mode"] | null
@@ -898,6 +902,7 @@ export type Database = {
         | "final_interview"
         | "follow_up"
         | "other"
+      application_tag: "high_priority" | "low_priority" | "remote"
       employment_type:
         | "full-time"
         | "part-time"
@@ -1064,6 +1069,7 @@ export const Constants = {
         "follow_up",
         "other",
       ],
+      application_tag: ["high_priority", "low_priority", "remote"],
       employment_type: [
         "full-time",
         "part-time",

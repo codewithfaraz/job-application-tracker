@@ -766,6 +766,10 @@ select is(
   'an aged cancellation still cannot release quota while its object exists'
 );
 
+-- Newer Storage versions block direct SQL deletes unless this flag is set,
+-- which is how the Storage API itself deletes objects. RLS still applies.
+set local storage.allow_delete_query = 'true';
+
 delete from storage.objects
 where bucket_id = 'resumes'
   and name = '00000000-0000-0000-0000-0000000000a1/40000000-0000-0000-0000-000000000006/cancel.txt';

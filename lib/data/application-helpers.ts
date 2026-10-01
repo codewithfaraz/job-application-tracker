@@ -1,3 +1,5 @@
+import { APPLICATION_TAGS, type ApplicationTag } from "@/lib/application-tags";
+
 export const APPLICATION_LIST_SORTS = [
   "updated_desc",
   "created_desc",
@@ -29,6 +31,7 @@ export type ApplicationListFilters = {
   source?: string | null;
   channel?: string | null;
   workMode?: ApplicationWorkMode | string | null;
+  tag?: ApplicationTag | string | null;
   archive?: ApplicationArchiveFilter | string | null;
   sort?: ApplicationListSort | string | null;
   page?: number | string | null;
@@ -41,6 +44,7 @@ export type NormalizedApplicationListFilters = {
   source?: string;
   channel?: string;
   workMode?: ApplicationWorkMode;
+  tag?: ApplicationTag;
   archive: ApplicationArchiveFilter;
   sort: ApplicationListSort;
   page: number;
@@ -88,6 +92,7 @@ export function normalizeApplicationListFilters(
     ...(isOneOf(filters.workMode, APPLICATION_WORK_MODES)
       ? { workMode: filters.workMode }
       : {}),
+    ...(isOneOf(filters.tag, APPLICATION_TAGS) ? { tag: filters.tag } : {}),
     archive: isOneOf(filters.archive, APPLICATION_ARCHIVE_FILTERS)
       ? filters.archive
       : "active",

@@ -26,6 +26,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  APPLICATION_TAG_LABELS,
+  APPLICATION_TAGS,
+  type ApplicationTag,
+} from "@/lib/application-tags";
 import type { ApplicationActionState } from "@/lib/validation/application";
 import { INITIAL_APPLICATION_ACTION_STATE } from "@/lib/validation/application";
 
@@ -68,6 +73,7 @@ type ApplicationFormValues = {
   salaryCurrency: string;
   salaryPeriod: string;
   appliedAt: string;
+  tag: string;
   resumeId: string;
   rawJobDescription: string;
   notes: string;
@@ -112,6 +118,21 @@ const salaryPeriods = [
   { value: "year", label: "Per year" },
 ];
 
+const tagDescriptions: Record<ApplicationTag, string> = {
+  high_priority: "Strong match with your resume.",
+  low_priority: "Weaker match; apply if time allows.",
+  remote: "Remote role.",
+};
+
+const tagChoices = [
+  ...APPLICATION_TAGS.map((tag) => ({
+    value: tag,
+    label: APPLICATION_TAG_LABELS[tag],
+    description: tagDescriptions[tag],
+  })),
+  { value: "", label: "No tag", description: "Leave it untagged for now." },
+];
+
 const stagesThatMayPrecedeAnApplication = new Set([
   "saved",
   "withdrawn",
@@ -153,6 +174,7 @@ function ApplicationForm({
       salaryCurrency: initialValues?.salaryCurrency ?? "USD",
       salaryPeriod: initialValues?.salaryPeriod ?? "",
       appliedAt: initialValues?.appliedAt ?? "",
+      tag: initialValues?.tag ?? "",
       resumeId: initialValues?.resumeId ?? "",
       rawJobDescription: initialValues?.rawJobDescription ?? "",
       notes: initialValues?.notes ?? "",
@@ -342,7 +364,7 @@ function ApplicationForm({
               </p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 {savedStage ? (
-                  <StageChoice
+                  <ChoiceCard
                     id="stage-saved"
                     name="stageId"
                     value={savedStage.id}
@@ -353,7 +375,7 @@ function ApplicationForm({
                   />
                 ) : null}
                 {appliedStage ? (
-                  <StageChoice
+                  <ChoiceCard
                     id="stage-applied"
                     name="stageId"
                     value={appliedStage.id}
@@ -416,6 +438,28 @@ function ApplicationForm({
           ) : (
             <input type="hidden" name="appliedAt" value="" />
           )}
+
+          <fieldset>
+            <legend className="text-sm font-semibold text-evergreen-deep">Tag</legend>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">
+              Optional. Mark how closely the role matches your resume, or flag it as remote.
+            </p>
+            <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
+              {tagChoices.map((choice) => (
+                <ChoiceCard
+                  key={choice.value || "none"}
+                  id={`tag-${choice.value || "none"}`}
+                  name="tag"
+                  value={choice.value}
+                  checked={values.tag === choice.value}
+                  onChange={() => setValues((current) => ({ ...current, tag: choice.value }))}
+                  title={choice.label}
+                  description={choice.description}
+                />
+              ))}
+            </div>
+            <FieldErrors id="tag" errors={errors.tag} />
+          </fieldset>
         </CardContent>
       </Card>
 
@@ -614,7 +658,7 @@ function DuplicateWarning({
   );
 }
 
-function StageChoice({
+function ChoiceCard({
   id,
   title,
   description,

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
+import { APPLICATION_TAG_LABELS, APPLICATION_TAGS } from "@/lib/application-tags";
 
 type FilterOption = {
   id: string;
@@ -17,6 +18,7 @@ type ApplicationFilterValues = {
   source?: string;
   channel?: string;
   workMode?: string;
+  tag?: string;
   archive?: string;
   sort?: string;
 };
@@ -57,6 +59,7 @@ function ApplicationFilters({
       values.source ||
       values.channel ||
       values.workMode ||
+      values.tag ||
       (values.archive && values.archive !== "active") ||
       (values.sort && values.sort !== "updated_desc"),
   );
@@ -129,6 +132,12 @@ function ApplicationFilters({
             <FilterSelect label="Work mode" name="workMode" defaultValue={values.workMode}>
               {workModeOptions.map((option) => (
                 <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </FilterSelect>
+            <FilterSelect label="Tag" name="tag" defaultValue={values.tag}>
+              <option value="">Any tag</option>
+              {APPLICATION_TAGS.map((tag) => (
+                <option key={tag} value={tag}>{APPLICATION_TAG_LABELS[tag]}</option>
               ))}
             </FilterSelect>
             <FilterSelect label="Archive" name="archive" defaultValue={values.archive ?? "active"}>

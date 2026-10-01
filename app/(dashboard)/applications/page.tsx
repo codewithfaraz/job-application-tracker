@@ -30,6 +30,7 @@ export default async function ApplicationsPage({
     source: first(raw.source),
     channel: first(raw.channel),
     workMode: first(raw.workMode),
+    tag: first(raw.tag),
     archive: first(raw.archive),
     sort: first(raw.sort),
     page: first(raw.page),
@@ -47,6 +48,7 @@ export default async function ApplicationsPage({
     source: first(raw.source),
     channel: first(raw.channel),
     workMode: first(raw.workMode),
+    tag: first(raw.tag),
     archive: first(raw.archive),
     sort: first(raw.sort),
   };

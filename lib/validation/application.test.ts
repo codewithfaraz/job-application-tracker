@@ -28,6 +28,7 @@ const validApplication = {
   salaryCurrency: "usd",
   salaryPeriod: "year",
   appliedAt: "2026-08-01",
+  tag: "",
   resumeId: "",
   rawJobDescription: "  Keep this exactly.\nSecond line.  ",
   notes: "A note",
@@ -85,6 +86,26 @@ describe("application validation", () => {
     expect(parsed.success).toBe(false);
   });
 
+  it("accepts each tag, treats a blank tag as none, and rejects unknown tags", () => {
+    for (const tag of ["high_priority", "low_priority", "remote"]) {
+      expect(createApplicationSchema.parse({ ...validApplication, tag }).tag).toBe(
+        tag,
+      );
+    }
+    expect(createApplicationSchema.parse(validApplication).tag).toBeNull();
+
+    const parsed = createApplicationSchema.safeParse({
+      ...validApplication,
+      tag: "urgent",
+    });
+    expect(parsed.success).toBe(false);
+    if (!parsed.success) {
+      expect(parsed.error.issues.some((issue) => issue.path[0] === "tag")).toBe(
+        true,
+      );
+    }
+  });
+
   it("normalizes valid date-only values deterministically", () => {
     expect(
       normalizeApplicationDateTime("2024-02-29"),
@@ -110,6 +131,15 @@ describe("application input helpers", () => {
       page: 1,
       pageSize: 100,
     });
+  });
+
+  it("keeps only known tag filters", () => {
+    expect(normalizeApplicationListFilters({ tag: "high_priority" }).tag).toBe(
+      "high_priority",
+    );
+    expect(normalizeApplicationListFilters({ tag: "urgent" })).not.toHaveProperty(
+      "tag",
+    );
   });
 
   it("escapes LIKE wildcards used by search", () => {

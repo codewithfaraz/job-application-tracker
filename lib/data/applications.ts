@@ -37,6 +37,7 @@ type ApplicationListRow = Pick<
   | "applied_at"
   | "current_stage_id"
   | "submitted_resume_id"
+  | "tag"
   | "archived_at"
   | "created_at"
   | "updated_at"
@@ -87,6 +88,7 @@ export type ApplicationListItem = {
   salaryCurrency: string | null;
   salaryPeriod: Enums<"salary_period"> | null;
   appliedAt: string | null;
+  tag: Enums<"application_tag"> | null;
   archivedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -347,6 +349,7 @@ function mapListItem(
     salaryCurrency: application.salary_currency,
     salaryPeriod: application.salary_period,
     appliedAt: application.applied_at,
+    tag: application.tag,
     archivedAt: application.archived_at,
     createdAt: application.created_at,
     updatedAt: application.updated_at,
@@ -390,7 +393,7 @@ export async function listApplications(
   let query = supabase
     .from("applications")
     .select(
-      "id,company_id,job_title,job_url,discovery_source_id,application_channel_id,location,work_mode,employment_type,seniority,salary_min,salary_max,salary_currency,salary_period,applied_at,current_stage_id,submitted_resume_id,archived_at,created_at,updated_at",
+      "id,company_id,job_title,job_url,discovery_source_id,application_channel_id,location,work_mode,employment_type,seniority,salary_min,salary_max,salary_currency,salary_period,applied_at,current_stage_id,submitted_resume_id,tag,archived_at,created_at,updated_at",
       { count: "exact" },
     )
     .eq("user_id", userId);
@@ -404,6 +407,7 @@ export async function listApplications(
     query = query.eq("application_channel_id", normalized.channel);
   }
   if (normalized.workMode) query = query.eq("work_mode", normalized.workMode);
+  if (normalized.tag) query = query.eq("tag", normalized.tag);
 
   if (normalized.archive === "active") {
     query = query.is("archived_at", null);

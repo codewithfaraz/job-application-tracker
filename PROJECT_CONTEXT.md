@@ -69,6 +69,7 @@ These are deliberate decisions. Keep them unless the owner says otherwise.
 | **Pipeline stage** | A user-owned stage (name, order, terminal flag) mapped to a fixed **category**. Analytics use the category, so stages can be renamed freely. | `pipeline_stages` |
 | **Stage event** | Immutable history row: from stage → to stage, when, and optional notes. The first event has `from_stage_id = null`. | `application_stage_events` |
 | **Saved vs Applied** | A new record starts either as **Saved** (a lead; no `applied_at`) or **Applied** (`applied_at` required). Analytics count only records that have ever reached an Applied-category stage. | — |
+| **Tag** | Optional single triage tag chosen on the form: **High priority** (strong match with the resume), **Low priority** (weaker match), or **Remote**. Independent of `work_mode`. | `applications.tag` |
 | **Archive vs delete** | Archive (`archived_at`) is reversible and keeps history; archived records still count in analytics by default. Delete is permanent and cascades. | — |
 | **"No response yet"** | Derived, never stored: currently Applied, not archived, never reached a response stage, and applied at least `profiles.no_response_days` (default 21) days ago. It never moves a record to Ghosted. | — |
 | **Contact** | A person (recruiter, hiring manager) tied to an application **and** that application's company. | `contacts` |
@@ -172,9 +173,11 @@ components/
   resumes/  settings/  auth/  layout/ (app shell, nav, brand mark, route spine)  ui/ (primitives)
 types/database.ts             Supabase-generated DB types — HAND-PATCHED, see §13
 supabase/
-  migrations/20260818000000_initial_schema.sql   The entire schema (one migration, ~2,460 lines)
+  migrations/20260818000000_initial_schema.sql   The base schema (~2,460 lines)
+  migrations/20261001184000_application_tag.sql  Adds the optional applications.tag column
   seed.sql                    Opt-in demo data for one existing user (5 companies)
   tests/database/job_crm_foundation.test.sql      pgTAP suite (75 assertions)
+  tests/database/application_tag.test.sql         pgTAP suite for tags (9 assertions)
   config.toml                 Local Supabase config (seeding disabled, API max_rows = 1000)
   .temp/                      Supabase CLI link cache — committed by mistake, see §14
 ```
@@ -211,8 +214,8 @@ Browser ──► proxy.ts ──► lib/supabase/proxy.ts   (getClaims, refresh
 | `/login`, `/signup` | Email/password auth | `getVerifiedIdentity` | `actions/auth.ts` |
 | `/auth/callback`, `/auth/confirm` | Code-exchange and email-confirmation route handlers | — | — |
 | `/dashboard` | "Applied today" panel (count for the current day in the profile timezone; an open tab refreshes itself after local midnight), KPI cards (Applications, Responses, Interviews, each with a rate — the Offers card was deliberately removed from the dashboard; offers still appear on `/analytics` and in the data layer), Active and No-response badges, monthly applications chart, active pipeline counts, next 5 upcoming interviews, most-used source and channel | `getDashboardOverview` | — |
-| `/applications` | Search by company or role; filters for stage, source, channel, work mode, and active / archived / all; sort; pagination (25 per page) | `listApplications`, `getApplicationFormOptions` | — |
-| `/applications/new` | **Quick entry:** company, role, found via, applied through, Saved/Applied, date. **More details:** URL, location, work mode, employment type, seniority, salary, raw JD (with optional AI analyzer), notes, resume. Shows a duplicate warning with "Create anyway". | `getApplicationFormOptions` | `createApplicationAction`, `analyzePastedJobDescriptionAction` |
+| `/applications` | Search by company or role; filters for stage, source, channel, work mode, tag, and active / archived / all; sort; pagination (25 per page) | `listApplications`, `getApplicationFormOptions` | — |
+| `/applications/new` | **Quick entry:** company, role, found via, applied through, Saved/Applied, date, optional tag (High priority / Low priority / Remote). **More details:** URL, location, work mode, employment type, seniority, salary, raw JD (with optional AI analyzer), notes, resume. Shows a duplicate warning with "Create anyway". | `getApplicationFormOptions` | `createApplicationAction`, `analyzePastedJobDescriptionAction` |
 | `/applications/[id]` | **Case file:** route spine (found → applied → current), original JD with copy button, notes, merged activity timeline, stage mover, details, AI workbench (3 tabs + saved history), contacts / interviews / timeline notes, company editor, archive / restore / delete | `getApplicationDetail`, `getApplicationAIHistory` | pipeline, crm, companies, ai, and applications actions |
 | `/applications/[id]/edit` | Full edit form, including the stage select and applied date | `getApplicationDetail` | `updateApplicationAction` |
 | `/pipeline` | One column per stage for non-archived applications. Each card has a stage `<select>` and a Move button (no drag-and-drop). | `getPipelineBoard` | `transitionApplicationStageAction` |
@@ -226,7 +229,7 @@ Browser ──► proxy.ts ──► lib/supabase/proxy.ts   (getClaims, refresh
 
 ## 7. Database
 
-Everything is defined in `supabase/migrations/20260818000000_initial_schema.sql`.
+The base schema is `supabase/migrations/20260818000000_initial_schema.sql`; later migrations in the same folder add to it (currently only `20261001184000_application_tag.sql`).
 
 Schemas: `public` (exposed through the API), `private` (internal functions and config; no API access), and `extensions` (`pgcrypto`, `pg_trgm`).
 
@@ -241,6 +244,7 @@ Schemas: `public` (exposed through the API), `private` (internal functions and c
 | `application_event_type` | recruiter_call, screening, technical_interview, behavioral_interview, system_design, technical_assessment, final_interview, follow_up, other |
 | `ai_operation` | job_extraction, resume_comparison, interview_prep_jd, interview_prep_jd_resume |
 | `ai_run_status` | pending, succeeded, failed |
+| `application_tag` | high_priority, low_priority, remote |
 
 ### 7.2 Tables (`public`)
 
@@ -253,7 +257,7 @@ Every table except `profiles` has `user_id uuid not null default auth.uid()` ref
 | `pipeline_stages` | `name` 1–80 chars, unique per user (case-insensitive); `category`; `sort_order` ≥ 0; `is_terminal`; `is_active` |
 | `companies` | `name` 1–200 chars, unique per user on `lower(btrim(name))`, trigram index; `website`, `industry`, `location`, `notes` |
 | `resumes` | `name` 1–120; `original_filename`; `storage_path` must start with `<user_id>/` (unique per user); `mime_type` ∈ PDF / DOCX / TXT; `file_size_bytes` 1 B–5 MiB; `file_hash` (SHA-256 hex); `extracted_text` ≤ 100k chars; `archived_at` |
-| `applications` | Required composite-owner FKs: `company_id`, `discovery_source_id`, `application_channel_id`, `current_stage_id`. Optional `submitted_resume_id`. `job_title` 1–240; `job_url`; `location`; `work_mode`; `employment_type`; `seniority`; `salary_min` / `salary_max` numeric(14,2) ≥ 0 with min ≤ max; `salary_currency` matching `^[A-Z]{3}$`; `salary_period`; `applied_at`; `raw_job_description` not null default `''`; `ai_summary`; `ai_extracted_data` (JSON object); `notes`; `archived_at`. Indexes cover stage, company, source, channel, resume, dates, and trigram search on `job_title` and `notes`. |
+| `applications` | Required composite-owner FKs: `company_id`, `discovery_source_id`, `application_channel_id`, `current_stage_id`. Optional `submitted_resume_id`. `job_title` 1–240; `job_url`; `location`; `work_mode`; `employment_type`; `seniority`; `salary_min` / `salary_max` numeric(14,2) ≥ 0 with min ≤ max; `salary_currency` matching `^[A-Z]{3}$`; `salary_period`; `applied_at`; `tag` (optional `application_tag`); `raw_job_description` not null default `''`; `ai_summary`; `ai_extracted_data` (JSON object); `notes`; `archived_at`. Indexes cover stage, company, source, channel, resume, dates, and trigram search on `job_title` and `notes`. |
 | `application_stage_events` | `application_id` (cascade); `from_stage_id` (null for the initial event); `to_stage_id`; `occurred_at`; `notes`; `created_at` = `clock_timestamp()`. `from ≠ to`; exactly one initial event per application. **Append-only — clients may only SELECT.** |
 | `contacts` | `company_id` (required, cascade); `application_id` (optional, cascade); `name` 1–160; `role`, `email`, `phone`, `linkedin_url`, `notes` |
 | `application_events` | `application_id` (cascade); `type`; `title` 1–240; `starts_at` (required); `ends_at` ≥ `starts_at`; `meeting_url`; `location`; `notes`; `completed_at` |
@@ -498,11 +502,11 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "set job_crm.demo_user_id = '<auth-us
 | `npm run typecheck` | ✅ Clean |
 | `npm run test` | ✅ 55/55 tests in 12 files at `85b4d2e`; 63/63 in 13 files after the Server Action export fix (adds `actions/server-action-exports.test.ts`). The PDF extraction test (`lib/resumes/extract-text.server.test.ts`) can exceed Vitest's 5-second default when the machine is busy — flaky under load, not broken. |
 | `npm run build` | ✅ Succeeds (Turbopack): `/` is static; the other 16 routes and the proxy are dynamic |
-| pgTAP (`npm run db:test`) | Not run (needs Docker) |
+| pgTAP (`npm run db:test`) | Not run at the time (needs Docker). First run on 2026-10-01: 84/84 in 2 files, after the foundation suite set `storage.allow_delete_query` (newer Storage blocks direct `delete from storage.objects` otherwise). |
 
 **Unit tests cover:** analytics aggregation and the Sankey builder, pipeline grouping and timeline, application and resume validation, AI schemas / prompts / cache key / config policy, resume text extraction, and the resume finalize action.
 
-**pgTAP covers:** two-user isolation, composite FKs, stage/date invariants, storage ownership, protected submitted resumes, stage-category stability, and AI-run permissions.
+**pgTAP covers:** two-user isolation, composite FKs, stage/date invariants, storage ownership, protected submitted resumes, stage-category stability, AI-run permissions, and application tags.
 
 There are **no end-to-end browser tests** committed.
 
