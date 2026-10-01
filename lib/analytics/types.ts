@@ -95,6 +95,13 @@ export type AnalyticsSummary = {
   activeApplications: number;
 };
 
+export type AppliedToday = {
+  /** Current calendar date (YYYY-MM-DD) in the profile timezone. */
+  date: string;
+  /** Applications whose first Applied event falls on `date`. */
+  count: number;
+};
+
 export type ConversionMetrics = {
   applicationToResponse: RateMetric;
   applicationToScreening: RateMetric;
@@ -184,6 +191,7 @@ export type AnalyticsOverview = {
   timezone: string;
   noResponseDays: number;
   summary: AnalyticsSummary;
+  appliedToday: AppliedToday;
   conversions: ConversionMetrics;
   sourceDistribution: DistributionPoint[];
   sourceEffectiveness: EffectivenessRow[];
@@ -207,6 +215,7 @@ export type DashboardOverview = Pick<
   | "timezone"
   | "noResponseDays"
   | "summary"
+  | "appliedToday"
   | "conversions"
   | "applicationsOverTime"
   | "currentPipeline"

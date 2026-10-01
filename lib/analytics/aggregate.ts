@@ -1,4 +1,9 @@
 import {
+  createCalendarFormatter,
+  localDateKey,
+  localDateParts,
+} from "./calendar";
+import {
   buildSankeyData,
   CATEGORY_ORDER,
   TERMINAL_CATEGORIES,
@@ -9,6 +14,7 @@ import type {
   AnalyticsFilters,
   AnalyticsOverview,
   AnalyticsStageEventInput,
+  AppliedToday,
   ConversionMetrics,
   DashboardOverview,
   DistributionPoint,
@@ -243,38 +249,6 @@ function dimensionRows(
   };
 }
 
-function createCalendarFormatter(timeZone: string) {
-  try {
-    return new Intl.DateTimeFormat("en-CA", {
-      timeZone,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    });
-  } catch {
-    return new Intl.DateTimeFormat("en-CA", {
-      timeZone: "UTC",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    });
-  }
-}
-
-function localDateParts(timestamp: number, formatter: Intl.DateTimeFormat) {
-  const parts = Object.fromEntries(
-    formatter
-      .formatToParts(timestamp)
-      .filter((part) => part.type !== "literal")
-      .map((part) => [part.type, part.value]),
-  );
-  return {
-    year: Number(parts.year),
-    month: Number(parts.month),
-    day: Number(parts.day),
-  };
-}
-
 function monthBucket(timestamp: number, formatter: Intl.DateTimeFormat) {
   const { year, month } = localDateParts(timestamp, formatter);
   return `${year}-${String(month).padStart(2, "0")}`;
@@ -304,6 +278,27 @@ function makeTimeBuckets(
   return [...counts]
     .sort(([left], [right]) => left.localeCompare(right))
     .map(([period, count]) => ({ period, count }));
+}
+
+/**
+ * Applications whose first Applied event falls on the current calendar day in
+ * the profile timezone. A daily tally rather than a cohort metric, so it
+ * ignores the date window and archive filter.
+ */
+function makeAppliedToday(
+  facts: ApplicationFacts[],
+  nowMs: number,
+  formatter: Intl.DateTimeFormat,
+): AppliedToday {
+  const date = localDateKey(nowMs, formatter);
+  return {
+    date,
+    count: facts.filter(
+      (item) =>
+        item.firstAppliedAtMs !== null &&
+        localDateKey(item.firstAppliedAtMs, formatter) === date,
+    ).length,
+  };
 }
 
 function makePipelineCounts(
@@ -450,6 +445,7 @@ export function aggregateAnalytics(
           !item.currentIsTerminal,
       ).length,
     },
+    appliedToday: makeAppliedToday(facts, filters.nowMs, calendarFormatter),
     conversions: makeConversions(cohort),
     sourceDistribution: source.distribution,
     sourceEffectiveness: source.effectiveness,
@@ -488,6 +484,7 @@ export function toDashboardOverview(
     timezone: overview.timezone,
     noResponseDays: overview.noResponseDays,
     summary: overview.summary,
+    appliedToday: overview.appliedToday,
     conversions: overview.conversions,
     sourceEffectiveness: overview.sourceEffectiveness,
     channelEffectiveness: overview.channelEffectiveness,
